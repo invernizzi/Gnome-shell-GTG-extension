@@ -94,13 +94,11 @@ function enable () {
     getActiveTasks(['@all'], function (tasks) {
         Main.gtg = tasks;
         for (var i in tasks) {
-            let task = tasks[i]
-            let task_label = new St.Label({text: task.title,
-                                           style_class: 'events-day-task'});
-            let task_button = new St.Button();
-            task_button.set_child(task_label);
-            task_button.connect('clicked', partial(_onTaskClicked, task.id));
-            tasksBox.insert_actor(task_button, -1);
+            let task = tasks[i];
+            let task_button = new PopupMenu.PopupMenuItem(task.title,
+                                {style_class: 'events-day-task'});
+            task_button.connect('activate', partial(_onTaskClicked, task.id));
+            tasksBox.add(task_button.actor, -1, {expand: true});
         };
     });
 
@@ -113,7 +111,6 @@ function enable () {
     item.actor.can_focus = false;
     gtgBox.add(item.actor, {y_align: St.Align.END, expand: true, y_fill: false});
 
-    global.log('complete');
     }
 
 function disable () {
