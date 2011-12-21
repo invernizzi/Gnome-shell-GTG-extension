@@ -3,8 +3,17 @@ const Main = imports.ui.main;
 const Lang = imports.lang;
 const Clutter = imports.gi.Clutter;
 const DBus = imports.dbus;
+const PopupMenu = imports.ui.popupMenu;
 
 function init () {
+}
+
+function partial(func /*, 0..n args */) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return function() {
+        var allArguments = args.concat(Array.prototype.slice.call(arguments));
+        return func.apply(this, allArguments);
+    };
 }
 
 function _onVertSepRepaint (area) {
@@ -27,6 +36,9 @@ const GtgIFace = {
     methods: [{ name: 'GetActiveTasks',
                 inSignature: 'as',
                 outSignature: 'aa{sv}' },
+              { name: 'ShowTaskBrowser',
+                inSignature: '',
+                outSignature: '' },
               { name: 'OpenTaskEditor',
                 inSignature: 's',
                 outSignature: '' }],
@@ -35,7 +47,7 @@ const GtgIFace = {
 const Gtg = DBus.makeProxyClass(GtgIFace);
 const _gtg = new Gtg(DBus.session, 'org.gnome.GTG', '/org/gnome/GTG');
 
-function GetActiveTasks (tags, callback) {
+function getActiveTasks (tags, callback) {
     function handler(results, error) {
         if (error != null)
             global.log("Error retrieving GTG tasks: "+error);
@@ -45,9 +57,19 @@ function GetActiveTasks (tags, callback) {
     _gtg.GetActiveTasksRemote(tags, handler);
 }
 
-function OpenTaskEditor(task_id) {
+function openTaskEditor (task_id) {
     _gtg.OpenTaskEditorRemote(task_id);
 }
+
+function showTaskBrowser () {
+    _gtg.ShowTaskBrowserRemote();
+}
+
+function _onTaskClicked (task_id) {
+    Main.panel._dateMenu.menu.close();
+    openTaskEditor(task_id);
+}
+
 
 function enable () {
     function getChildByName (a_parent, name) {
@@ -62,21 +84,34 @@ function enable () {
     separator.connect('repaint', Lang.bind(this, _onVertSepRepaint));
     calendarArea.add_actor(separator);
 
-    gtgBox = new St.BoxLayout({style_class: 'calendar'});
+    gtgBox = new St.BoxLayout();
     gtgBox.set_vertical(true);
-    calendarArea.add_actor(gtgBox);
+    calendarArea.add_actor(gtgBox, {expand: true});
+    tasksBox = new St.BoxLayout();
+    tasksBox.set_vertical(true);
+    gtgBox.add(tasksBox, {style_class: 'calendar'});
 
-    GetActiveTasks(['@all'], function (tasks) {
+    getActiveTasks(['@all'], function (tasks) {
         Main.gtg = tasks;
         for (var i in tasks) {
-            let task_label = new St.Label({text: tasks[i].title,
+            let task = tasks[i]
+            let task_label = new St.Label({text: task.title,
                                            style_class: 'events-day-task'});
-            // task_label.connect('clicked', function () {
-            //     OpenTaskEditor(tasks[i].id);
-            // });
-            gtgBox.insert_actor(task_label, -1);
+            let task_button = new St.Button();
+            task_button.set_child(task_label);
+            task_button.connect('clicked', partial(_onTaskClicked, task.id));
+            tasksBox.insert_actor(task_button, -1);
         };
     });
+
+
+    item = new PopupMenu.PopupMenuItem(_("Open GTG"));
+    item.connect('activate', function () {
+        Main.panel._dateMenu.menu.close();
+        showTaskBrowser();
+    });
+    item.actor.can_focus = false;
+    gtgBox.add(item.actor, {y_align: St.Align.END, expand: true, y_fill: false});
 
     global.log('complete');
     }
