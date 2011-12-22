@@ -95,8 +95,35 @@ function enable () {
         Main.gtg = tasks;
         for (var i in tasks) {
             let task = tasks[i];
-            let task_button = new PopupMenu.PopupMenuItem(task.title,
-                                {style_class: 'events-day-task'});
+            time = Date.parse(task.duedate);
+            task.sort_index = new Date();
+            if (isNaN(time)) {
+                fuzzy_date_discount = {'now': -3, 'soon': -2, 'later': +1}[task.duedate];
+                year = 3000;
+                if (fuzzy_date_discount) {
+                    year += fuzzy_date_discount;
+                };
+                task.sort_index.setYear(year);
+            } else {
+                task.sort_index.setTime(time);
+                task.due_today = true;
+            };
+        };
+        tasks.sort(function(a, b) { return a.sort_index > b.sort_index });
+        for (var i in tasks) {
+            if (i > 15) {
+                tasksBox.add(new PopupMenu.PopupMenuItem('[...]',
+                             {style_class: 'events-day-task'}
+                        ).actor, -1, {expand: true});
+                break;
+            }
+            let task = tasks[i];
+            let title = task.title.substr(0, 70);
+            if (title.length != task.title.length) title += '...';
+            style_class = 'events-day-task';
+            if (task.due_today) style_class += ' due-today';
+            let task_button = new PopupMenu.PopupMenuItem(title,
+                                {style_class: style_class});
             task_button.connect('activate', partial(_onTaskClicked, task.id));
             tasksBox.add(task_button.actor, -1, {expand: true});
         };

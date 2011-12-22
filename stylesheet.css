@@ -1,6 +1,4 @@
-.gtgBox {
-    padding: .4em 1.75em;
-    spacing-rows: 0px;
-    spacing-columns: 0px;
+.due-today {
+    color: red;
 }
 
