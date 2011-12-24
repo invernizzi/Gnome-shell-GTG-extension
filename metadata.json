@@ -3,6 +3,7 @@
     "3.3.2"
   ],
  "uuid": "gtg@lucainvernizzi.net",
- "name": "Gtg",
- "description": "Integrate GTG with the calendar panel"}
+ "url": "http://lucainvernizzi.net",
+ "name": "GTG tasks in calendar panel",
+ "description": "Integrate GTG with the calendar panel. It works, but it's not usable yet. I'm just uploading this to check that it works with the website. Stay tuned!"}
 
