@@ -253,6 +253,7 @@ function refreshAllTasks() {
  ***************************************************************************/
 
 let signal_added_handle, signal_modified_handle, signal_deleted_handle;
+let separator;
 
 /* Initialization */
 function init() {
@@ -260,10 +261,14 @@ function init() {
 
 /* Extension disabling */
 function disable() {
-    gtgBox.destroy();
-    signal_added_handle.disconnect();
-    signal_modified_handle.disconnect();
-    signal_deleted_handle.disconnect();
+    try {
+        gtgBox.destroy();
+        separator.destroy();
+        gtg.disconnect(signal_added_handle);
+        gtg.disconnect(signal_modified_handle);
+        gtg.disconnect(signal_deleted_handle);
+    } catch (err) {
+    }
 }
 
 /*Extension enabling */
@@ -275,7 +280,7 @@ function enable() {
                     return elem.name == name
                 })[0];
     }
-    calendarArea = getChildByName(Main.panel._dateMenu.menu.box, 'calendarArea');
+    let calendarArea = getChildByName(Main.panel._dateMenu.menu.box, 'calendarArea');
     separator = new St.DrawingArea({style_class: 'calendar-vertical-separator',
                                         pseudo_class: 'highlighted' });
     separator.connect('repaint', Lang.bind(this, _onVertSepRepaint));
@@ -287,7 +292,7 @@ function enable() {
     tasksBox.set_vertical(true);
     gtgBox.add(tasksBox, {style_class: 'calendar'});
     /* Add "Open GTG" button */
-    open_gtg_button = new PopupMenu.PopupMenuItem("Open GTG");
+    let open_gtg_button = new PopupMenu.PopupMenuItem("Open GTG");
     open_gtg_button.connect('activate', function () {
         Main.panel._dateMenu.menu.close();
         showTaskBrowser();
